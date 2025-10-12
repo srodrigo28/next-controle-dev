@@ -172,6 +172,16 @@ declare module "next-auth" {
 https://console.cloud.google.com/home/dashboard
 ```
 
+http://localhost:3000/api/auth
+http://localhost:3000/api/auth
+http://localhost:3000/api/auth/callback/google
+http://localhost:3000/api/auth/callback/google
+
+https://next-auth.js.org/configuration/initialization#route-handlers-app
+
+[...nextauth]
+[...nextauth]
+
 * link google credial
 ```
 https://console.cloud.google.com/auth/clients/create?project=next-dev-controle
