@@ -14,6 +14,43 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// schema padrão do adapter Account, Session, User, VerificationRequest
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String
+  addres    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamento com Ticket
+  tickets   Ticket[]
+  userId String?
+  User User? @relation(fields: [userId], references: [id])
+}
+
+model Ticket {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  status      String
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Chave estrangeira Custumer
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id])
+
+  // estrangeira User
+  userId  String?
+  User User? @relation(fields: [userId], references: [id])
+}
+
+
 model Account {
   id                 String    @id @default(cuid())
   userId             String
@@ -51,6 +88,9 @@ model User {
   updatedAt     DateTime  @updatedAt
   accounts      Account[]
   sessions      Session[]
+  
+  tickets Ticket[]
+  customers Customer[]
 }
 
 model VerificationRequest {
