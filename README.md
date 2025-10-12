@@ -182,6 +182,11 @@ https://next-auth.js.org/configuration/initialization#route-handlers-app
 [...nextauth]
 [...nextauth]
 
+npm install @auth/prisma-adapter@latest next-auth@latest prisma@latest @prisma/client@latest
+
+npx prisma migrate dev --name add-type-to-account
+
+
 * link google credial
 ```
 https://console.cloud.google.com/auth/clients/create?project=next-dev-controle

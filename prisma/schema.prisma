@@ -16,55 +16,23 @@ datasource db {
 
 // schema padrão do adapter Account, Session, User, VerificationRequest
 
-model Customer {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String
-  email     String
-  addres    String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relacionamento com Ticket
-  tickets   Ticket[]
-  userId String?
-  User User? @relation(fields: [userId], references: [id])
-}
-
-model Ticket {
-  id          String   @id @default(cuid())
-  name        String
-  description String
-  status      String
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Chave estrangeira Custumer
-  customerId  String?
-  customer    Customer? @relation(fields: [customerId], references: [id])
-
-  // estrangeira User
-  userId  String?
-  User User? @relation(fields: [userId], references: [id])
-}
-
-
 model Account {
-  id                 String    @id @default(cuid())
+  id                 String   @id @default(cuid())
   userId             String
-  providerType       String
-  providerId         String
+  type               String
+  provider           String
   providerAccountId  String
-  refreshToken       String?
   accessToken        String?
-  accessTokenExpires DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  user               User      @relation(fields: [userId], references: [id])
+  refreshToken       String?
+  expiresAt          Int?
+  tokenType          String?
+  scope              String?
+  idToken            String?
+  user               User     @relation(fields: [userId], references: [id])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  @@unique([providerId, providerAccountId])
+  @@unique([provider, providerAccountId])
 }
 
 model Session {
@@ -72,7 +40,7 @@ model Session {
   userId       String
   expires      DateTime
   sessionToken String   @unique
-  accessToken  String   @unique
+  accessToken  String?  @unique  // ✅ agora é opcional
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   user         User     @relation(fields: [userId], references: [id])
@@ -88,11 +56,44 @@ model User {
   updatedAt     DateTime  @updatedAt
   accounts      Account[]
   sessions      Session[]
-  
-  tickets Ticket[]
-  customers Customer[]
+  tickets       Ticket[]
+  customers     Customer[]
 }
 
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String
+  address   String // <- Corrigido
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tickets   Ticket[]
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([email])
+  @@index([userId])
+}
+
+model Ticket {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  status      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id])
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id])
+
+  @@index([status])
+  @@index([userId])
+  @@index([customerId])
+}
+
+// Substitua isto:
 model VerificationRequest {
   id         String   @id @default(cuid())
   identifier String
@@ -100,6 +101,15 @@ model VerificationRequest {
   expires    DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, token])
+}
+
+// Por isto (recomendado no NextAuth v4+):
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
   @@unique([identifier, token])
 }
