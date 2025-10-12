@@ -30,7 +30,7 @@ export function Header() {
                 </Link>
 
                 { status === "loading" && (
-                    <button>
+                    <button className="animate-spin">
                         <FiLoader size={26} color="" />
                     </button>
                 )}
@@ -44,10 +44,10 @@ export function Header() {
                  { status === "authenticated" && (
                     <div className="flex gap-2 items-center">
                         <Link href="/dashboard" className="hover:scale-105 cursor-pointer">
-                            <FiUser size={26} className="text-blue-500" />
+                            <FiUser size={22} className="text-blue-500" />
                         </Link>
                         <button onClick={Logout} className="hover:scale-105 cursor-pointer">
-                            <FiLogOut size={26} className="text-red-500" />
+                            <FiLogOut size={22} className="text-red-500" />
                         </button>
                     </div>
                 )}

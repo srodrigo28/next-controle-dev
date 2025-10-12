@@ -85,6 +85,69 @@ export const authOptions: AuthOptions = {
 }
 ```
 
+#### 7. atualizado
+```
+import { PrismaAdapter } from '@auth/prisma-adapter'
+import GoogleProvider from 'next-auth/providers/google'
+import { AuthOptions } from 'next-auth'
+import PrismaClient from './prisma'
+
+export const authOptions: AuthOptions = {
+  adapter: PrismaAdapter(PrismaClient),
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    }),
+  ],
+  callbacks: {
+    async session({ session, token, user }) {
+      session.user = { ...session.user, id: user.id } as {
+        id: string
+        name: string
+        email: string
+      }
+
+      return session
+    },
+
+    async signIn({ user, account, profile }) {
+      // Verifica se já existe um user com o mesmo e-mail
+      const existingUser = await PrismaClient.user.findUnique({
+        where: { email: user.email ?? undefined },
+      })
+
+      if (existingUser && account?.provider && account?.providerAccountId) {
+        // Faz o upsert da conta OAuth
+        await PrismaClient.account.upsert({
+          where: {
+            provider_providerAccountId: {
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+            },
+          },
+          update: {},
+          create: {
+            userId: existingUser.id,
+            type: account.type,
+            provider: account.provider,
+            providerAccountId: account.providerAccountId,
+            accessToken: account.access_token,
+            refreshToken: account.refresh_token,
+            expiresAt: account.expires_at,
+            tokenType: account.token_type,
+            scope: account.scope,
+            idToken: account.id_token,
+          },
+        })
+      }
+
+      return true
+    },
+  },
+}
+```
+
 ##### 8. [x] aula 109 Criando [...nextauth].js src/app/api/auth/[...nextauth]/route.ts
 ```
 import NextAuth from 'next-auth'
@@ -218,20 +281,41 @@ https://next-auth.js.org/v3/adapters/prisma
 
 * prisma.schema
 ```
-model Account {
-  id                 String    @id @default(cuid())
-  userId             String
-  providerType       String
-  providerId         String
-  providerAccountId  String
-  refreshToken       String?
-  accessToken        String?
-  accessTokenExpires DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  user               User      @relation(fields: [userId], references: [id])
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-  @@unique([providerId, providerAccountId])
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// schema padrão do adapter Account, Session, User, VerificationRequest
+
+model Account {
+  id                 String   @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  accessToken        String?
+  refreshToken       String?
+  expiresAt          Int?
+  tokenType          String?
+  scope              String?
+  idToken            String?
+  user               User     @relation(fields: [userId], references: [id])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
 }
 
 model Session {
@@ -239,7 +323,7 @@ model Session {
   userId       String
   expires      DateTime
   sessionToken String   @unique
-  accessToken  String   @unique
+  accessToken  String?  @unique  // ✅ agora é opcional
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   user         User     @relation(fields: [userId], references: [id])
@@ -255,8 +339,44 @@ model User {
   updatedAt     DateTime  @updatedAt
   accounts      Account[]
   sessions      Session[]
+  tickets       Ticket[]
+  customers     Customer[]
 }
 
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String
+  address   String // <- Corrigido
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tickets   Ticket[]
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([email])
+  @@index([userId])
+}
+
+model Ticket {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  status      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id])
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id])
+
+  @@index([status])
+  @@index([userId])
+  @@index([customerId])
+}
+
+// Substitua isto:
 model VerificationRequest {
   id         String   @id @default(cuid())
   identifier String
@@ -267,6 +387,16 @@ model VerificationRequest {
 
   @@unique([identifier, token])
 }
+
+// Por isto (recomendado no NextAuth v4+):
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
 ```
 
 ##### link doc
