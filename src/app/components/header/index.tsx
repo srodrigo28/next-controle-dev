@@ -33,6 +33,10 @@ export function Header() {
                     <Link href="/cadastro">
                         <h2>Cadastro</h2>
                     </Link>
+
+                    <Link href="/produto">
+                        <h2>Produto</h2>
+                    </Link>
                 </nav>
 
                 { status === "loading" && (

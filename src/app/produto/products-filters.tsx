@@ -1,3 +1,5 @@
+'use client'
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Search } from "lucide-react";
 import { useForm } from "react-hook-form"
@@ -12,7 +14,7 @@ type ProductsFiltersSchema = z.infer<typeof productsFiltersSchema>
 
 export function ProductsFilters(){
     
-    const { register, handleSubmit } = useForm<ProductsFiltersSchema>({
+    const { register, handleSubmit } = useForm<ProductsFiltersSchema> ({
         resolver: zodResolver(productsFiltersSchema)
     })
 
