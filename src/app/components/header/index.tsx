@@ -29,6 +29,12 @@ export function Header() {
                     </h1>
                 </Link>
 
+                <nav>
+                    <Link href="/cadastro">
+                        <h2>Cadastro</h2>
+                    </Link>
+                </nav>
+
                 { status === "loading" && (
                     <button className="animate-spin">
                         <FiLoader size={26} color="" />

@@ -402,6 +402,7 @@ model VerificationToken {
 ##### link doc
 ```
 ```
+
 ##### Gerando tabelas do prisma.schema
 ```
 npx prisma migrate
